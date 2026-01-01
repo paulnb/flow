@@ -69,8 +69,8 @@ export const ResumeView = () => {
                         <div>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-bold text-lg">B.S. Computer Science</h3>
-                                    <p className="text-sm text-secondary font-medium">University of Texas</p>
+                                    <h3 className="font-bold text-lg">M.B.A. Internet Marketing</h3>
+                                    <p className="text-sm text-secondary font-medium">Florida Institute of Technology</p>
                                 </div>
                                 <span className="text-xs font-bold uppercase tracking-wider bg-secondary/5 px-2 py-1 rounded text-secondary">2020</span>
                             </div>
