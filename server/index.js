@@ -66,7 +66,7 @@ app.use(express.static(path.join(__dirname, '../dist')));
 
 // 2. The "Great UX" Catch-all:
 // If the user visits a route like /resume, send them the index.html so React can take over
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
     // Only send the file if it's not an API call
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(__dirname, '../dist', 'index.html'));
