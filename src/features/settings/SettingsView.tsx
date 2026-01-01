@@ -16,13 +16,20 @@ interface SettingsViewProps {
 }
 
 export const SettingsView = ({ userProfile, onUpdateProfile, onShowToast }: SettingsViewProps) => {
-    // FIX: Removed useEffect. We initialize state once.
-    // If the parent wants to reset this, it should change the 'key' prop on this component.
-    const [localProfile, setLocalProfile] = useState(userProfile);
+    // FIX: Initialize with "Persona" data to hide real identity
+    const [localProfile, setLocalProfile] = useState({
+        name: "Flow Admin",
+        email: "demo@coepi.co",
+        title: "Administrator",
+        // Keep the avatar if one exists, otherwise null
+        avatar: userProfile?.avatar || ""
+    });
+
     const [systemLatency, setSystemLatency] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    if (!userProfile) return null;
+    // Remove the early return so the hook order stays consistent
+    // if (!userProfile) return null;
 
     const runDiagnostics = async () => {
         const start = performance.now();
@@ -63,7 +70,7 @@ export const SettingsView = ({ userProfile, onUpdateProfile, onShowToast }: Sett
                             <img src={localProfile.avatar} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-surface shadow-xl" />
                         ) : (
                             <div className="w-24 h-24 rounded-full bg-primary text-white flex items-center justify-center font-black text-3xl border-4 border-surface shadow-xl">
-                                {localProfile.name ? localProfile.name.slice(0, 2).toUpperCase() : '??'}
+                                {localProfile.name ? localProfile.name.slice(0, 2).toUpperCase() : 'FA'}
                             </div>
                         )}
                         <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
