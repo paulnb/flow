@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchTasks, createTask, deleteTask } from './services/api';
+import { fetchTasks, createTask, deleteTask, updateTask } from './services/api';
 import { GridBackground } from './components/ui/GridBackground';
 import { LiveClock } from './components/ui/LiveClock';
 
@@ -11,13 +11,13 @@ import { TeamView } from './features/team/TeamView';
 import type { TeamMember } from './features/team/TeamView';
 import { SettingsView } from './features/settings/SettingsView';
 import { ResumeView } from './features/resume/ResumeView';
-import { TaskCard } from './features/tasks/TaskCard';
+import { TasksView } from './features/tasks/TasksView';
 
 import type { Task } from './types/task';
 import {
     LayoutDashboard, CheckCircle2, Users, Settings,
-    LogOut, Bell, Search, AlertCircle, Plus, X, Loader2,
-    Wallet, Calendar, Trash2, FileText, Menu // Added 'Menu' icon
+    LogOut, Bell, AlertCircle, X,
+    Wallet, Calendar, Trash2, FileText, Menu, Edit2
 } from 'lucide-react';
 
 type Theme = 'light' | 'dark' | 'cardinal';
@@ -43,7 +43,7 @@ function App() {
 
     // UI States
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: Mobile Sidebar State
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [newTask, setNewTask] = useState<NewTaskState>({ title: '', content: '', priority: 'medium' });
@@ -72,12 +72,18 @@ function App() {
 
     const { data: tasks, isLoading, error } = useQuery({ queryKey: ['tasks'], queryFn: fetchTasks });
 
+    // --- HELPER: Close Everything ---
+    const handleCloseModals = () => {
+        setIsModalOpen(false);
+        setSelectedTask(null);
+        setNewTask({ title: '', content: '', priority: 'medium' });
+    };
+
     const createMutation = useMutation({
         mutationFn: createTask,
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            setIsModalOpen(false);
-            setNewTask({ title: '', content: '', priority: 'medium' });
+            handleCloseModals();
             showToast('Task added successfully');
         },
     });
@@ -86,8 +92,17 @@ function App() {
         mutationFn: deleteTask,
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            if (selectedTask) setSelectedTask(null);
+            handleCloseModals();
             showToast('Task deleted');
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: updateTask,
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            handleCloseModals();
+            showToast('Task updated successfully');
         },
     });
 
@@ -96,12 +111,41 @@ function App() {
         setTimeout(() => setToastMessage(null), 3000);
     };
 
-    const handleCreateTask = (e: React.FormEvent) => {
+    const handleSubmitTask = (e: React.FormEvent) => {
         e.preventDefault();
-        createMutation.mutate(newTask);
+
+        if (selectedTask && isModalOpen) {
+            updateMutation.mutate({
+                id: selectedTask.id,
+                ...newTask
+            });
+        } else {
+            createMutation.mutate(newTask);
+        }
     };
 
-    // Helper to close sidebar when clicking a menu item on mobile
+    const handleToggleStatus = (task: Task) => {
+        const newStatus = task.status === 'done' ? 'todo' : 'done';
+        updateMutation.mutate({ id: task.id, status: newStatus });
+    };
+
+    // 1. CLICK CARD: Just open the preview, don't start editing yet
+    const handleViewTask = (task: Task) => {
+        setSelectedTask(task);
+        setIsModalOpen(false);
+    };
+
+    // 2. CLICK "EDIT" BUTTON: Switch from Preview to Edit Mode
+    const handleSwitchToEdit = () => {
+        if (!selectedTask) return;
+        setNewTask({
+            title: selectedTask.title,
+            content: selectedTask.content,
+            priority: selectedTask.priority
+        });
+        setIsModalOpen(true); // This opens the form on top/instead of the preview
+    };
+
     const handleNavClick = (view: View) => {
         setActiveView(view);
         setIsSidebarOpen(false);
@@ -128,7 +172,7 @@ function App() {
                 </div>
             )}
 
-            {/* MOBILE OVERLAY (Closes menu when clicking outside) */}
+            {/* MOBILE OVERLAY */}
             {isSidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
@@ -136,7 +180,7 @@ function App() {
                 />
             )}
 
-            {/* SIDEBAR (Responsive classes added) */}
+            {/* SIDEBAR */}
             <aside className={`
                 fixed lg:sticky top-0 h-screen z-50 w-64 
                 border-r border-secondary/10 bg-surface/95 backdrop-blur-xl 
@@ -145,7 +189,6 @@ function App() {
             `}>
                 <div className="p-8 flex justify-between items-center">
                     <span className="text-2xl font-black tracking-tighter text-primary">FLOW.</span>
-                    {/* Close button for mobile */}
                     <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-secondary hover:text-primary">
                         <X size={20} />
                     </button>
@@ -172,48 +215,27 @@ function App() {
             {/* MAIN CONTENT */}
             <div className="flex-1 flex flex-col min-w-0">
                 <header className="h-20 border-b border-secondary/10 backdrop-blur-md px-4 lg:px-8 flex justify-between items-center sticky top-0 z-40 bg-background/30">
-
-                    {/* LEFT SIDE: Hamburger & Search */}
                     <div className="flex items-center gap-4 text-secondary/60">
-                        {/* Hamburger Button (Mobile Only) */}
-                        <button
-                            onClick={() => setIsSidebarOpen(true)}
-                            className="lg:hidden p-2 -ml-2 text-secondary hover:text-primary transition-colors"
-                        >
+                        <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 -ml-2 text-secondary hover:text-primary transition-colors">
                             <Menu size={24} />
                         </button>
-
-                        <div className="hidden md:flex items-center gap-2">
-                            <Search size={18} />
-                            <span className="text-sm font-medium">Search {activeView}...</span>
-                        </div>
                     </div>
 
-                    {/* RIGHT SIDE: Controls */}
                     <div className="flex items-center gap-3 lg:gap-6">
-                        {/* Hidden on small mobile */}
-                        <div className="hidden sm:block">
-                            <LiveClock />
-                        </div>
-
+                        <div className="hidden sm:block"><LiveClock /></div>
                         <div className="h-6 w-px bg-secondary/10 hidden sm:block" />
-
-                        {/* Theme Switcher - Compact on Mobile */}
                         <div className="flex bg-secondary/5 p-1 rounded-full border border-secondary/10 scale-90">
                             {(['light', 'dark', 'cardinal'] as const).map((t) => (
                                 <button key={t} onClick={() => { setTheme(t); document.documentElement.setAttribute('data-theme', t); }}
                                         className={`px-3 lg:px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300 ${
                                             theme === t ? 'bg-surface text-primary shadow-sm' : 'text-secondary'
                                         }`}>
-                                    {/* Show first letter on mobile, full name on desktop */}
                                     <span className="lg:hidden">{t[0].toUpperCase()}</span>
                                     <span className="hidden lg:inline">{t.toUpperCase()}</span>
                                 </button>
                             ))}
                         </div>
-
                         <button className="relative text-secondary hover:text-primary transition-colors"><Bell size={20} strokeWidth={2.5} /><span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" /></button>
-
                         <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary/20 border-2 border-primary overflow-hidden">
                             {userProfile.avatar && userProfile.avatar.length > 5 ? (
                                 <img src={userProfile.avatar} alt="Me" className="w-full h-full object-cover" />
@@ -227,7 +249,6 @@ function App() {
                 </header>
 
                 <main className="p-4 lg:p-10 max-w-7xl w-full mx-auto">
-                    {/* Error Banner */}
                     {error && (
                         <div className="mb-8 p-6 border-2 border-red-500/20 bg-red-500/5 rounded-2xl flex items-center gap-4 text-red-500">
                             <AlertCircle size={24} />
@@ -235,15 +256,15 @@ function App() {
                         </div>
                     )}
 
-                    {/* View Router */}
                     {activeView === 'Overview' && (
                         <Overview
-                            tasks={tasks}
+                            tasks={tasks || []}
                             isLoading={isLoading}
                             error={error}
                             onDeleteTask={(id) => deleteMutation.mutate(id)}
-                            onViewDetails={(t) => setSelectedTask(t)}
+                            onViewDetails={handleViewTask} // Opens Preview Modal
                             onQuickAdd={() => setIsModalOpen(true)}
+                            onToggleStatus={handleToggleStatus} // <--- ADD THIS LINE
                         />
                     )}
 
@@ -263,36 +284,42 @@ function App() {
                     {activeView === 'Resume' && <ResumeView />}
 
                     {activeView === 'My Tasks' && (
-                        <section className="animate-slide-up">
-                            <header className="flex justify-between items-end mb-8">
-                                <h1 className="text-3xl lg:text-4xl font-black tracking-tight">My Tasks</h1>
-                                <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform text-sm">
-                                    <Plus size={18} /> New Task
-                                </button>
-                            </header>
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {isLoading && <div className="col-span-full flex justify-center py-20 text-primary opacity-50"><Loader2 className="animate-spin" size={48} /></div>}
-                                {Array.isArray(tasks) && tasks.map((task) => (
-                                    <TaskCard key={task.id} task={task} onDelete={(id) => deleteMutation.mutate(id)} onViewDetails={(t) => setSelectedTask(t)} />
-                                ))}
-                            </div>
-                        </section>
+                        <TasksView
+                            tasks={tasks || []}
+                            isLoading={isLoading}
+                            error={error}
+                            onDeleteTask={(id) => deleteMutation.mutate(id)}
+                            onViewDetails={handleViewTask} // Pass the view handler
+                            onQuickAdd={() => {
+                                setNewTask({ title: '', content: '', priority: 'medium' });
+                                setSelectedTask(null);
+                                setIsModalOpen(true);
+                            }}
+                            onToggleStatus={handleToggleStatus}
+                            onEditTask={handleViewTask} // Override Edit to View first
+                        />
                     )}
                 </main>
             </div>
 
-            {/* MODALS */}
+            {/* EDIT / CREATE MODAL */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-6 backdrop-blur-sm bg-black/20">
-                    <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl border border-secondary/10 p-8 animate-in fade-in zoom-in duration-200">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-6 backdrop-blur-sm bg-black/20"
+                    onClick={handleCloseModals}
+                >
+                    <div
+                        className="bg-surface w-full max-w-md rounded-3xl shadow-2xl border border-secondary/10 p-8 animate-in fade-in zoom-in duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-black tracking-tight">Create Task</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-secondary hover:text-text-main"><X /></button>
+                            <h2 className="text-2xl font-black tracking-tight">{selectedTask ? 'Edit Task' : 'Create Task'}</h2>
+                            <button onClick={handleCloseModals} className="text-secondary hover:text-text-main"><X /></button>
                         </div>
-                        <form onSubmit={handleCreateTask} className="space-y-4">
+                        <form onSubmit={handleSubmitTask} className="space-y-4">
                             <div>
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1 block">Title</label>
-                                <input required value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} className="w-full bg-secondary/5 border border-secondary/10 rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-colors" placeholder="Task name..." />
+                                <input required value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} className="w-full bg-white dark:bg-black/50 border border-secondary/20 rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-colors text-text-main" placeholder="Task name..." />
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1 block">Priority</label>
@@ -304,17 +331,26 @@ function App() {
                             </div>
                             <div>
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1 block">Content</label>
-                                <textarea required value={newTask.content} onChange={e => setNewTask({...newTask, content: e.target.value})} className="w-full bg-secondary/5 border border-secondary/10 rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-colors h-32" placeholder="Describe the work..." />
+                                <textarea required value={newTask.content} onChange={e => setNewTask({...newTask, content: e.target.value})} className="w-full bg-white dark:bg-black/50 border border-secondary/20 rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-colors h-32 text-text-main" placeholder="Describe the work..." />
                             </div>
-                            <button type="submit" disabled={createMutation.isPending} className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity disabled:opacity-50">{createMutation.isPending ? 'Syncing...' : 'Add to Pipeline'}</button>
+                            <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity disabled:opacity-50">
+                                {createMutation.isPending || updateMutation.isPending ? 'Saving...' : selectedTask ? 'Save Changes' : 'Add to Pipeline'}
+                            </button>
                         </form>
                     </div>
                 </div>
             )}
 
-            {selectedTask && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 lg:p-6 backdrop-blur-md bg-black/40" onClick={() => setSelectedTask(null)}>
-                    <div className="bg-surface w-full max-w-2xl rounded-3xl shadow-2xl border border-secondary/10 p-8 lg:p-10 animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            {/* PREVIEW MODAL */}
+            {selectedTask && !isModalOpen && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 lg:p-6 backdrop-blur-md bg-black/40"
+                    onClick={handleCloseModals}
+                >
+                    <div
+                        className="bg-surface w-full max-w-2xl rounded-3xl shadow-2xl border border-secondary/10 p-8 lg:p-10 animate-in fade-in zoom-in duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border mb-4 ${selectedTask.priority === 'high' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-primary/10 text-primary border-primary/20'}`}>
@@ -323,11 +359,19 @@ function App() {
                                 </div>
                                 <h2 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight">{selectedTask.title}</h2>
                             </div>
-                            <button onClick={() => setSelectedTask(null)} className="p-2 bg-secondary/5 rounded-full hover:bg-secondary/10 transition-colors text-secondary"><X size={20} /></button>
+                            <div className="flex gap-2">
+                                {/* NEW: EDIT BUTTON in Preview */}
+                                <button onClick={handleSwitchToEdit} className="p-2 bg-secondary/5 rounded-full hover:bg-secondary/10 transition-colors text-primary" title="Edit Task">
+                                    <Edit2 size={20} />
+                                </button>
+                                <button onClick={handleCloseModals} className="p-2 bg-secondary/5 rounded-full hover:bg-secondary/10 transition-colors text-secondary">
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
                         <div className="prose prose-lg text-secondary mb-8"><p>{selectedTask.content}</p></div>
                         <div className="flex gap-4 pt-8 border-t border-secondary/10">
-                            <div className="flex items-center gap-3 text-sm text-secondary"><Calendar size={16} /><span>Created: {new Date().toLocaleDateString()}</span></div>
+                            <div className="flex items-center gap-3 text-sm text-secondary"><Calendar size={16} /><span>Created: {new Date(selectedTask.createdAt || Date.now()).toLocaleDateString()}</span></div>
                             <div className="flex-1" />
                             <button onClick={() => deleteMutation.mutate(selectedTask.id)} className="flex items-center gap-2 text-red-500 hover:bg-red-500/10 px-4 py-2 rounded-xl transition-colors font-bold text-sm"><Trash2 size={16} /> Delete Task</button>
                         </div>

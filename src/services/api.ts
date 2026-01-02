@@ -13,13 +13,23 @@ export const fetchTasks = async (): Promise<Task[]> => {
     return response.data;
 };
 
-// NEW: This allows App.tsx to send data to the server
+// Allows App.tsx to send data to the server
 export const createTask = async (task: Partial<Task>): Promise<Task> => {
     const response = await axios.post(`${API_URL}/tasks`, task);
     return response.data;
 };
 
-// NEW: This allows App.tsx to delete data
+// Allows App.tsx to delete data
 export const deleteTask = async (id: string): Promise<void> => {
     await axios.delete(`${API_URL}/tasks/${id}`);
+};
+
+export const updateTask = async (task: Partial<Task> & { id: string }) => {
+    const response = await fetch(`${API_URL}/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(task),
+    });
+    if (!response.ok) throw new Error('Failed to update task');
+    return response.json();
 };

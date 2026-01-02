@@ -57,6 +57,29 @@ app.post('/api/tasks', async (req, res) => {
     }
 });
 
+// UPDATE a task (Toggle status or Edit content)
+app.put('/api/tasks/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, content, priority, status } = req.body;
+    try {
+        const result = await pool.query(
+            `UPDATE tasks 
+             SET title = COALESCE($1, title), 
+                 content = COALESCE($2, content), 
+                 priority = COALESCE($3, priority), 
+                 status = COALESCE($4, status),
+                 updated_at = NOW()
+             WHERE id = $5 
+             RETURNING *`,
+            [title, content, priority, status, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.delete('/api/tasks/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM flow.tasks WHERE id = $1', [req.params.id]);

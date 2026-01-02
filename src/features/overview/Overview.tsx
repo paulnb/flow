@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Loader2, AlertCircle, Search } from 'lucide-react'; // Added Search
+import { Plus, Loader2, AlertCircle, Search } from 'lucide-react';
 import { MetricCard } from '../../components/ui/MetricCard';
 import { TaskCard } from '../tasks/TaskCard';
 import type { Task } from '../../types/task';
@@ -11,6 +11,7 @@ interface OverviewProps {
     onDeleteTask: (id: string) => void;
     onViewDetails: (task: Task) => void;
     onQuickAdd: () => void;
+    onToggleStatus: (task: Task) => void; // NEW: Added this prop
 }
 
 export const Overview = ({
@@ -19,7 +20,8 @@ export const Overview = ({
                              error,
                              onDeleteTask,
                              onViewDetails,
-                             onQuickAdd
+                             onQuickAdd,
+                             onToggleStatus // Destructure it here
                          }: OverviewProps) => {
 
     // 1. SEARCH STATE
@@ -27,9 +29,11 @@ export const Overview = ({
 
     const totalTasks = tasks?.length || 0;
     const highPriorityCount = tasks?.filter(t => t.priority === 'high').length || 0;
-    const completionRate = "85%";
+    // Calculate real completion rate if possible, otherwise keep hardcoded for now
+    const completedCount = tasks?.filter(t => t.status === 'done').length || 0;
+    const completionRate = totalTasks > 0 ? `${Math.round((completedCount / totalTasks) * 100)}%` : "0%";
 
-    // 2. SEARCH LOGIC (Filters the list as you type)
+    // 2. SEARCH LOGIC
     const filteredTasks = (tasks || []).filter(task =>
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.content?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -57,15 +61,16 @@ export const Overview = ({
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* NEW SEARCH INPUT */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    {/* SEARCH INPUT */}
+                    <div className="relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
                         <input
                             type="text"
                             placeholder="Search tasks..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-white border-2 border-secondary/10 rounded-xl text-sm focus:outline-none focus:border-primary transition-colors w-64"
+                            // Updated styles for visibility in Dark Mode
+                            className="pl-10 pr-4 py-2 bg-white dark:bg-black/20 border-2 border-secondary/10 rounded-xl text-sm focus:outline-none focus:border-primary transition-colors w-64"
                         />
                     </div>
 
@@ -77,7 +82,6 @@ export const Overview = ({
 
             {/* 3. TASK GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* KEEPING YOUR ERROR LOGIC */}
                 {!!error && (
                     <div className="col-span-full p-6 border-2 border-red-500/20 bg-red-500/5 rounded-2xl flex items-center gap-4 text-red-500">
                         <AlertCircle size={24} />
@@ -94,22 +98,32 @@ export const Overview = ({
                     </div>
                 )}
 
-                {/* UPDATED LOGIC:
-                    If searching, show all matches.
-                    If not searching, show top 3. */}
                 {!isLoading && !error && (
                     searchTerm ? (
+                        // SEARCH RESULTS (Show all matches)
                         filteredTasks.map((task) => (
-                            <TaskCard key={task.id} task={task} onDelete={onDeleteTask} onViewDetails={onViewDetails} />
+                            <TaskCard
+                                key={task.id}
+                                task={task}
+                                onDelete={onDeleteTask}
+                                onViewDetails={onViewDetails}
+                                onToggleStatus={onToggleStatus} // Passed down
+                            />
                         ))
                     ) : (
+                        // RECENT ACTIVITY (Show top 3)
                         (tasks || []).slice(0, 3).map((task) => (
-                            <TaskCard key={task.id} task={task} onDelete={onDeleteTask} onViewDetails={onViewDetails} />
+                            <TaskCard
+                                key={task.id}
+                                task={task}
+                                onDelete={onDeleteTask}
+                                onViewDetails={onViewDetails}
+                                onToggleStatus={onToggleStatus} // Passed down
+                            />
                         ))
                     )
                 )}
 
-                {/* NO RESULTS FOUND STATE */}
                 {!isLoading && searchTerm && filteredTasks.length === 0 && (
                     <div className="col-span-full text-center py-10 text-secondary opacity-60">
                         No tasks match your search.
