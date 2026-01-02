@@ -25,11 +25,6 @@ export const deleteTask = async (id: string): Promise<void> => {
 };
 
 export const updateTask = async (task: Partial<Task> & { id: string }) => {
-    const response = await fetch(`${API_URL}/tasks/${task.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(task),
-    });
-    if (!response.ok) throw new Error('Failed to update task');
-    return response.json();
+    const response = await axios.put(`${API_URL}/tasks/${task.id}`, task);
+    return response.data;
 };

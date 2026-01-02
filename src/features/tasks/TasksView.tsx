@@ -10,8 +10,7 @@ interface TasksViewProps {
     onDeleteTask: (id: string) => void;
     onViewDetails: (task: Task) => void;
     onQuickAdd: () => void;
-    onToggleStatus: (task: Task) => void; // NEW: Handle "Complete"
-    onEditTask: (task: Task) => void;     // NEW: Handle "Edit"
+    onToggleStatus: (task: Task) => void;
 }
 
 export const TasksView = ({
@@ -20,8 +19,7 @@ export const TasksView = ({
                               onDeleteTask,
                               onViewDetails,
                               onQuickAdd,
-                              onToggleStatus,
-                              onEditTask
+                              onToggleStatus
                           }: TasksViewProps) => {
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -81,7 +79,7 @@ export const TasksView = ({
                             placeholder="Search..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary w-40 lg:w-48 transition-colors"
+                            className="pl-9 pr-4 py-2 bg-white dark:bg-black/20 border border-secondary/10 rounded-xl text-sm focus:outline-none focus:border-primary w-40 lg:w-48 transition-colors"
                         />
                     </div>
 
@@ -90,7 +88,7 @@ export const TasksView = ({
                         <select
                             value={filterPriority}
                             onChange={(e) => setFilterPriority(e.target.value as any)}
-                            className="appearance-none pl-3 pr-8 py-2 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-secondary focus:outline-none focus:border-primary cursor-pointer"
+                            className="appearance-none pl-3 pr-8 py-2 bg-white dark:bg-black/20 border border-secondary/10 rounded-xl text-sm font-bold text-secondary focus:outline-none focus:border-primary cursor-pointer"
                         >
                             <option value="all">All Priorities</option>
                             <option value="high">High Priority</option>
@@ -105,7 +103,7 @@ export const TasksView = ({
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as any)}
-                            className="appearance-none pl-3 pr-8 py-2 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-secondary focus:outline-none focus:border-primary cursor-pointer"
+                            className="appearance-none pl-3 pr-8 py-2 bg-white dark:bg-black/20 border border-secondary/10 rounded-xl text-sm font-bold text-secondary focus:outline-none focus:border-primary cursor-pointer"
                         >
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -130,7 +128,6 @@ export const TasksView = ({
                         onDelete={onDeleteTask}
                         onViewDetails={onViewDetails}
                         onToggleStatus={onToggleStatus}
-                        onEdit={onEditTask}
                     />
                 ))}
             </div>

@@ -14,7 +14,15 @@ export const TaskCard = ({ task, onDelete, onViewDetails, onToggleStatus }: Task
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const date = new Date(dateString);
+        // Shows: "Jan 2, 2026, 4:30 PM"
+        return date.toLocaleString([], {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
     };
 
     const isDone = task.status === 'done';

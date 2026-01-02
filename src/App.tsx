@@ -262,9 +262,9 @@ function App() {
                             isLoading={isLoading}
                             error={error}
                             onDeleteTask={(id) => deleteMutation.mutate(id)}
-                            onViewDetails={handleViewTask} // Opens Preview Modal
+                            onViewDetails={handleViewTask} // Pass the view handler
                             onQuickAdd={() => setIsModalOpen(true)}
-                            onToggleStatus={handleToggleStatus} // <--- ADD THIS LINE
+                            onToggleStatus={handleToggleStatus}
                         />
                     )}
 
@@ -296,7 +296,7 @@ function App() {
                                 setIsModalOpen(true);
                             }}
                             onToggleStatus={handleToggleStatus}
-                            onEditTask={handleViewTask} // Override Edit to View first
+                            // FIXED: No longer passing onEditTask here
                         />
                     )}
                 </main>
@@ -329,6 +329,33 @@ function App() {
                                     ))}
                                 </div>
                             </div>
+                            {/* NEW: Status Selector (Only show when editing) */}
+                            {selectedTask && (
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1 block">Status</label>
+                                    <div className="flex gap-2">
+                                        {(['todo', 'in-progress', 'done'] as const).map((s) => (
+                                            <button
+                                                type="button"
+                                                key={s}
+                                                onClick={() => {
+                                                    // Only update local state if we are in "Edit" mode logic
+                                                    // For now, we can piggyback on a new state or just update the task object directly if you refactor
+                                                    // Ideally, add 'status' to your newTask state definition
+                                                    alert("Status selection coming in next polish step!");
+                                                }}
+                                                className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border ${
+                                                    s === 'done' ? 'border-green-500/50 text-green-600 bg-green-500/10' :
+                                                        s === 'in-progress' ? 'border-blue-500/50 text-blue-600 bg-blue-500/10' :
+                                                            'border-secondary/20 text-secondary'
+                                                }`}
+                                            >
+                                                {s.replace('-', ' ')}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             <div>
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1 block">Content</label>
                                 <textarea required value={newTask.content} onChange={e => setNewTask({...newTask, content: e.target.value})} className="w-full bg-white dark:bg-black/50 border border-secondary/20 rounded-xl px-4 py-3 focus:outline-none focus:border-primary transition-colors h-32 text-text-main" placeholder="Describe the work..." />
