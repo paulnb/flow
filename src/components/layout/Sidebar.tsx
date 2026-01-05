@@ -1,5 +1,5 @@
 import { LayoutDashboard, CheckCircle2, Settings, Users, LogOut } from 'lucide-react';
-
+import ProjectInfoModal from "./ProjectInfoModal";
 export const Sidebar = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', active: true },
@@ -18,16 +18,15 @@ export const Sidebar = () => {
                 {menuItems.map((item) => (
                     <button
                         key={item.label}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                            item.active ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-secondary/5 hover:text-text-main'
-                        }`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${item.active ? 'bg-primary/10 text-primary' : 'text-secondary hover:bg-secondary/5 hover:text-text-main'
+                            }`}
                     >
                         <item.icon size={18} />
                         {item.label}
                     </button>
                 ))}
             </nav>
-
+            <ProjectInfoModal />
             <div className="p-4 border-t border-secondary/10">
                 <button className="flex items-center gap-3 px-4 py-3 text-secondary hover:text-red-500 transition-colors">
                     <LogOut size={18} />
