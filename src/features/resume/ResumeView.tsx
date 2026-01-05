@@ -8,7 +8,6 @@ export const ResumeView = () => {
                 <div>
                     <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-2 text-foreground">Paul Basco</h1>
                     <p className="text-primary font-bold text-xl">React UX Engineer</p>
-                    <p className="text-secondary text-sm mt-1">469.471.1440 | paul.n.basco@gmail.com | coepi.co</p>
                 </div>
                 <button
                     onClick={() => window.print()}
@@ -31,7 +30,7 @@ export const ResumeView = () => {
                             <h2 className="text-xl font-bold text-foreground">Professional Summary</h2>
                         </div>
                         <p className="text-secondary leading-relaxed text-sm">
-                            Digital operations specialist transitioning to full stack engineering with a focus on React, UX Design, and automation. Combining 6+ years of user conversion data analysis with modern frontend development skills. As a Catholic husband and father, I am deeply aligned with Flocknote’s mission to build a more connected Church.
+                            Digital operations specialist transitioning to full stack engineering with a focus on React, UX Design, and automation. Combining 6+ years of user conversion data analysis with modern frontend development skills.
                         </p>
                     </div>
 
