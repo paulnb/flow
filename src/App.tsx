@@ -33,8 +33,8 @@ type NewTaskState = {
 const DEFAULT_PROFILE = { name: 'Paul Basco', email: 'paul@coepi.co', title: 'Lead Engineer', avatar: '' };
 const DEFAULT_TEAM: TeamMember[] = [
     { id: 1, name: 'Paul Basco', role: 'Owner', status: 'online', avatar: 'PB' },
-    { id: 2, name: 'Sarah Connor', role: 'Product Manager', status: 'busy', avatar: 'SC' },
-    { id: 3, name: 'John Smith', role: 'Frontend Dev', status: 'offline', avatar: 'JS' },
+    { id: 2, name: 'Sarah Kroger', role: 'Product Manager', status: 'busy', avatar: 'SC' },
+    { id: 3, name: 'Seph Schlueter', role: 'Frontend Dev', status: 'offline', avatar: 'JS' },
 ];
 
 function App() {
