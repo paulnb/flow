@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-    LayoutDashboard, CheckCircle2, AlertCircle, TrendingUp,
+    AlertCircle, TrendingUp,
     Search, Plus, DollarSign
 } from 'lucide-react';
 import { TaskCard } from '../tasks/TaskCard';
@@ -18,7 +18,6 @@ interface OverviewProps {
 
 export const Overview = ({
     tasks,
-    isLoading,
     onDeleteTask,
     onViewDetails,
     onQuickAdd,

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import {
     X, Plus, Calendar, ArrowUpRight,
     Search, Filter, CheckCircle2, DollarSign, CreditCard,
-    Wallet, Users, TrendingUp // Added icons for the detail view
+    Wallet, Users,
 } from 'lucide-react';
 import { DonationRow } from '../../components/ui/DonationRow';
 
