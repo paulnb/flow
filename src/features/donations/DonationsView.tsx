@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import {
-    X, Save, Plus, Calendar, ArrowUpRight,
-    Link as LinkIcon, Search, Filter, CheckCircle2, DollarSign, CreditCard
+    X, Plus, Calendar, ArrowUpRight,
+    Search, Filter, CheckCircle2, DollarSign, CreditCard,
+    Wallet, Users, TrendingUp // Added icons for the detail view
 } from 'lucide-react';
 import { DonationRow } from '../../components/ui/DonationRow';
 
@@ -11,6 +12,9 @@ interface Fund {
     fund: string;
     amount: number;
     count: number;
+    // Added these for the Detail View
+    description: string;
+    lastGift: string;
 }
 
 interface Transaction {
@@ -30,10 +34,38 @@ interface Batch {
 
 // --- DEFAULT DATA ---
 const DEFAULT_FUNDS: Fund[] = [
-    { id: 1, fund: "General Fund", amount: 1745.00, count: 17 },
-    { id: 2, fund: "Building Campaign", amount: 1115.00, count: 4 },
-    { id: 3, fund: "Youth Retreat", amount: 330.00, count: 10 },
-    { id: 4, fund: "Disaster Relief", amount: 50.00, count: 2 },
+    {
+        id: 1,
+        fund: "General Fund",
+        amount: 1745.00,
+        count: 17,
+        description: 'Unrestricted donations used for general operating expenses and daily maintenance.',
+        lastGift: 'Jan 4, 2026'
+    },
+    {
+        id: 2,
+        fund: "Building Campaign",
+        amount: 1115.00,
+        count: 4,
+        description: 'Capital campaign for the new community center annex construction.',
+        lastGift: 'Dec 28, 2025'
+    },
+    {
+        id: 3,
+        fund: "Youth Retreat",
+        amount: 330.00,
+        count: 10,
+        description: 'Subsidies for the upcoming Summer Youth Camp to ensure all kids can attend.',
+        lastGift: 'Jan 2, 2026'
+    },
+    {
+        id: 4,
+        fund: "Disaster Relief",
+        amount: 50.00,
+        count: 2,
+        description: 'Emergency funds for local flood victims.',
+        lastGift: 'Nov 15, 2025'
+    },
 ];
 
 const DEFAULT_BATCHES: Batch[] = [
@@ -60,10 +92,11 @@ const DEFAULT_BATCHES: Batch[] = [
 
 export const DonationsView = () => {
     // 1. STATE
-    const [funds, setFunds] = useState<Fund[]>(DEFAULT_FUNDS);
+    const [funds] = useState<Fund[]>(DEFAULT_FUNDS);
     const [batches] = useState<Batch[]>(DEFAULT_BATCHES);
 
-    const [editingFund, setEditingFund] = useState<Fund | null>(null);
+    // Changed from editingFund to selectedFund for the Detail View
+    const [selectedFund, setSelectedFund] = useState<Fund | null>(null);
     const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
     const [isAllBatchesOpen, setIsAllBatchesOpen] = useState(false);
     const [isRecordingGift, setIsRecordingGift] = useState(false);
@@ -74,14 +107,6 @@ export const DonationsView = () => {
 
     const fmt = (num: number) =>
         new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
-
-    // 3. HANDLERS
-    const handleSaveFund = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingFund) return;
-        setFunds(prev => prev.map(f => f.id === editingFund.id ? editingFund : f));
-        setEditingFund(null);
-    };
 
     return (
         <section className="animate-slide-up relative">
@@ -97,6 +122,7 @@ export const DonationsView = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
+                    {/* YTD CARD */}
                     <div className="bg-surface p-8 rounded-3xl border border-secondary/10 shadow-sm relative overflow-hidden">
                         <div className="flex justify-between items-start relative z-10">
                             <div>
@@ -110,29 +136,23 @@ export const DonationsView = () => {
                         </div>
                     </div>
 
+                    {/* FUND LIST */}
                     <div className="bg-surface rounded-3xl border border-secondary/10 shadow-sm divide-y divide-secondary/5 overflow-hidden">
                         {funds.map((item) => (
-                            <div key={item.id} className="group relative cursor-pointer hover:bg-secondary/5 transition-colors">
-                                <a
-                                    href={`https://flow.coepi.co/public/${item.id}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 bg-primary/5 flex items-center justify-center backdrop-blur-[1px] transition-all"
-                                >
-                                    <div className="bg-white px-4 py-2 rounded-xl shadow-xl text-primary font-bold text-xs uppercase tracking-widest flex items-center gap-2 border border-primary/20">
-                                        <LinkIcon size={14} /> Open Public Page
-                                    </div>
-                                </a>
-
-                                <div onClick={() => setEditingFund(item)}>
-                                    <DonationRow fund={item.fund} amount={fmt(item.amount)} count={item.count} />
-                                </div>
+                            <div
+                                key={item.id}
+                                // UPDATED: removed the <a> tag overlay
+                                // UPDATED: Click now opens the Detail Modal
+                                onClick={() => setSelectedFund(item)}
+                                className="group relative cursor-pointer hover:bg-secondary/5 transition-colors"
+                            >
+                                <DonationRow fund={item.fund} amount={fmt(item.amount)} count={item.count} />
                             </div>
                         ))}
                     </div>
                 </div>
 
+                {/* BATCHES SIDEBAR (Unchanged) */}
                 <div className="bg-surface p-6 rounded-3xl border border-secondary/10 shadow-sm h-fit">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-sm font-bold uppercase tracking-widest text-secondary">Batches</h3>
@@ -170,28 +190,72 @@ export const DonationsView = () => {
                 </div>
             </div>
 
-            {/* --- MODAL 1: EDIT FUND --- */}
-            {editingFund && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/20" onClick={() => setEditingFund(null)}>
-                    <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl border border-secondary/10 p-8" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-black tracking-tight">Edit Fund</h2>
-                            <button onClick={() => setEditingFund(null)} className="text-secondary"><X /></button>
-                        </div>
-                        <form onSubmit={handleSaveFund} className="space-y-4">
-                            <div>
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1 block">Fund Name</label>
-                                <input required value={editingFund.fund} onChange={e => setEditingFund({ ...editingFund, fund: e.target.value })} className="w-full bg-secondary/5 border border-secondary/10 rounded-xl px-4 py-3" />
+            {/* --- MODAL 1: FUND DETAILS (NEW) --- */}
+            {selectedFund && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-md bg-black/40 animate-in fade-in duration-200"
+                    onClick={() => setSelectedFund(null)}
+                >
+                    <div
+                        className="bg-surface w-full max-w-lg rounded-3xl shadow-2xl border border-secondary/10 p-8 animate-in zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-red-500/10 text-red-500 rounded-xl">
+                                    <Wallet size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black tracking-tight">{selectedFund.fund}</h2>
+                                    <p className="text-secondary text-sm font-bold">Fund Details</p>
+                                </div>
                             </div>
-                            <button type="submit" className="w-full bg-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 mt-4">
-                                <Save size={16} /> Save Changes
+                            <button
+                                onClick={() => setSelectedFund(null)}
+                                className="p-2 bg-secondary/5 rounded-full hover:bg-secondary/10 text-secondary transition-colors"
+                            >
+                                <X size={20} />
                             </button>
-                        </form>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Balance Card */}
+                            <div className="p-6 bg-secondary/5 rounded-2xl text-center border border-secondary/10">
+                                <p className="text-secondary text-xs font-bold uppercase tracking-widest mb-1">Current Balance</p>
+                                <p className="text-4xl font-black text-primary">
+                                    {fmt(selectedFund.amount)}
+                                </p>
+                            </div>
+
+                            {/* Description */}
+                            <div>
+                                <h3 className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">Description</h3>
+                                <p className="text-secondary leading-relaxed bg-white dark:bg-black/20 p-4 rounded-xl border border-secondary/10 text-sm">
+                                    {selectedFund.description}
+                                </p>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 border border-secondary/10 rounded-xl flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 text-secondary text-xs font-bold uppercase">
+                                        <Users size={14} /> Total Gifts
+                                    </div>
+                                    <span className="text-xl font-bold">{selectedFund.count}</span>
+                                </div>
+                                <div className="p-4 border border-secondary/10 rounded-xl flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 text-secondary text-xs font-bold uppercase">
+                                        <Calendar size={14} /> Last Gift
+                                    </div>
+                                    <span className="text-xl font-bold">{selectedFund.lastGift}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* --- MODAL 2: BATCH DETAILS --- */}
+            {/* --- MODAL 2: BATCH DETAILS (Unchanged) --- */}
             {selectedBatch && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/20" onClick={() => setSelectedBatch(null)}>
                     <div className="bg-surface w-full max-w-2xl rounded-3xl shadow-2xl p-8" onClick={e => e.stopPropagation()}>
@@ -216,7 +280,7 @@ export const DonationsView = () => {
                 </div>
             )}
 
-            {/* --- MODAL 3: RECORD GIFT PLACEHOLDER --- */}
+            {/* --- MODAL 3: RECORD GIFT (Unchanged) --- */}
             {isRecordingGift && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/20" onClick={() => setIsRecordingGift(false)}>
                     <div className="bg-surface w-full max-w-md rounded-3xl shadow-2xl p-8" onClick={e => e.stopPropagation()}>
@@ -227,7 +291,7 @@ export const DonationsView = () => {
                 </div>
             )}
 
-            {/* --- MODAL 4: ALL BATCHES --- */}
+            {/* --- MODAL 4: ALL BATCHES (Unchanged) --- */}
             {isAllBatchesOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/20" onClick={() => setIsAllBatchesOpen(false)}>
                     <div className="bg-surface w-full max-w-lg rounded-3xl shadow-2xl p-8" onClick={e => e.stopPropagation()}>

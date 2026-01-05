@@ -6,7 +6,7 @@ import type { Task } from '../../types/task';
 interface TaskCardProps {
     task: Task;
     onDelete?: (id: string) => void;
-    onViewDetails?: (task: Task) => void; // This is now the main click action
+    onViewDetails?: (task: Task) => void;
     onToggleStatus?: (task: Task) => void;
 }
 
@@ -15,11 +15,9 @@ export const TaskCard = ({ task, onDelete, onViewDetails, onToggleStatus }: Task
     const formatDate = (dateString?: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        // Shows: "Jan 2, 2026, 4:30 PM"
         return date.toLocaleString([], {
             month: 'short',
             day: 'numeric',
-            year: 'numeric',
             hour: 'numeric',
             minute: '2-digit'
         });
@@ -30,10 +28,9 @@ export const TaskCard = ({ task, onDelete, onViewDetails, onToggleStatus }: Task
     return (
         <motion.div
             layout
-            // CLICKING CARD NOW OPENS PREVIEW (View Details)
             onClick={() => onViewDetails?.(task)}
             initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: isDone ? 0.5 : 1, scale: 1 }}
+            animate={{ opacity: isDone ? 0.6 : 1, scale: 1 }}
             className={clsx(
                 "relative p-5 rounded-2xl border backdrop-blur-md shadow-sm overflow-hidden group flex flex-col justify-between h-full transition-all cursor-pointer hover:shadow-md hover:border-primary/30",
                 isDone ? "border-green-500/20 bg-green-500/5" : "border-white/10 bg-white/5"
@@ -41,12 +38,22 @@ export const TaskCard = ({ task, onDelete, onViewDetails, onToggleStatus }: Task
         >
             <div className="relative z-10 pointer-events-none">
                 <div className="flex justify-between items-start mb-3 pointer-events-auto">
-                    {/* STATUS TOGGLE */}
+                    {/* STATUS TOGGLE: Swapped Icon Logic */}
                     <button
                         onClick={(e) => { e.stopPropagation(); onToggleStatus?.(task); }}
-                        className={clsx("transition-colors p-1 -ml-1 rounded-full hover:bg-white/10", isDone ? "text-green-500" : "text-secondary/40 hover:text-primary")}
+                        className={clsx("transition-all duration-300 p-1 -ml-1 rounded-full",
+                            isDone
+                                ? "text-green-500 bg-white/20 hover:bg-white/40"
+                                : "text-secondary/40 hover:text-primary hover:bg-white/10"
+                        )}
                     >
-                        {isDone ? <CheckCircle2 size={22} className="fill-current" /> : <Circle size={22} />}
+                        {isDone ? (
+                            // FILLED GREEN CHECK when done
+                            <CheckCircle2 size={24} className="fill-green-500 text-white" />
+                        ) : (
+                            // EMPTY CIRCLE when todo
+                            <Circle size={24} />
+                        )}
                     </button>
 
                     {/* DELETE BUTTON */}
@@ -69,18 +76,27 @@ export const TaskCard = ({ task, onDelete, onViewDetails, onToggleStatus }: Task
 
             {/* FOOTER */}
             <div className="relative z-10 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] text-secondary/60 font-medium">
-                 <span className={clsx(
-                     "uppercase tracking-widest font-bold px-2 py-0.5 rounded-full border",
-                     task.priority === 'high' ? "border-red-500/30 text-red-400 bg-red-500/5" :
-                         task.priority === 'medium' ? "border-yellow-500/30 text-yellow-400 bg-yellow-500/5" :
-                             "border-blue-500/30 text-blue-400 bg-blue-500/5"
-                 )}>
-                    {task.priority}
-                </span>
+                <div className="flex gap-2">
+                    <span className={clsx(
+                        "uppercase tracking-widest font-bold px-2 py-0.5 rounded-full border",
+                        task.priority === 'high' ? "border-red-500/30 text-red-400 bg-red-500/5" :
+                            task.priority === 'medium' ? "border-yellow-500/30 text-yellow-400 bg-yellow-500/5" :
+                                "border-blue-500/30 text-blue-400 bg-blue-500/5"
+                    )}>
+                        {task.priority}
+                    </span>
+
+                    {/* VISUAL STATUS BADGE */}
+                    {task.status === 'in-progress' && (
+                        <span className="uppercase tracking-widest font-bold px-2 py-0.5 rounded-full border border-blue-500/30 text-blue-400 bg-blue-500/5">
+                            In Progress
+                        </span>
+                    )}
+                </div>
 
                 <div className="flex items-center gap-1.5">
                     <Clock size={12} />
-                    <span>{formatDate(task.createdAt) || 'Today'}</span>
+                    <span>{formatDate(task.createdAt)}</span>
                 </div>
             </div>
         </motion.div>

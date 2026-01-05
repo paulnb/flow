@@ -9,12 +9,13 @@ export const ResumeView = () => {
                     <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-2 text-foreground">Paul Basco</h1>
                     <p className="text-primary font-bold text-xl">React UX Engineer</p>
                 </div>
-                <button
-                    onClick={() => window.print()}
+                <a
+                    href="/resume.pdf"
+                    download="Paul Basco Resume - Jan 2026.pdf"
                     className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform text-sm"
                 >
                     <Download size={18} /> Download PDF
-                </button>
+                </a>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
