@@ -11,7 +11,7 @@ export const ResumeView = () => {
                 </div>
                 <a
                     href="/resume.pdf"
-                    download="Paul Basco Resume - Jan 2026.pdf"
+                    download="Basco_Resume.pdf"
                     className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform text-sm"
                 >
                     <Download size={18} /> Download PDF
