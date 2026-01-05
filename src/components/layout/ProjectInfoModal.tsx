@@ -1,15 +1,22 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export default function ProjectInfoModal() {
     const [isOpen, setIsOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    // Prevent hydration errors by ensuring we only portal on the client
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     return (
         <>
-            {/* THE TRIGGER BUTTON - Place this in your Sidebar */}
+            {/* THE TRIGGER BUTTON */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 mt-4 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-md hover:bg-blue-100 transition-colors w-full"
+                className="flex items-center gap-2 px-4 py-2 mt-auto mb-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-md hover:bg-blue-100 transition-colors w-full"
             >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -17,11 +24,13 @@ export default function ProjectInfoModal() {
                 <span>About this Project</span>
             </button>
 
-            {/* THE MODAL */}
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-white/10 relative">
+            {/* THE MODAL (Portaled to body) */}
+            {isOpen && mounted && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    {/* Click outside to close */}
+                    <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
 
+                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-white/10 relative z-10">
                         <button
                             onClick={() => setIsOpen(false)}
                             className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -59,7 +68,8 @@ export default function ProjectInfoModal() {
                             </p>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );

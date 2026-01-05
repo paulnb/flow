@@ -1,5 +1,6 @@
 import { LayoutDashboard, CheckCircle2, Settings, Users, LogOut } from 'lucide-react';
 import ProjectInfoModal from "./ProjectInfoModal";
+
 export const Sidebar = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', active: true },
@@ -26,7 +27,12 @@ export const Sidebar = () => {
                     </button>
                 ))}
             </nav>
-            <ProjectInfoModal />
+
+            {/* Added px-4 wrapper for alignment */}
+            <div className="px-4">
+                <ProjectInfoModal />
+            </div>
+
             <div className="p-4 border-t border-secondary/10">
                 <button className="flex items-center gap-3 px-4 py-3 text-secondary hover:text-red-500 transition-colors">
                     <LogOut size={18} />
